@@ -908,13 +908,29 @@ function Sputnik:make_url(node_name, action, params, anchor)
 
    -- then the parameters
    if params and next(params) then
+      local bits = {}
+      local encode
+      if string.find("?", url, 1, true) then
+         -- if the url has a query delimiter, must url_encode the parameters
+         encode = true
+      else
+         -- the params are part of the URL itself, don't encode, but add a
+         -- param delimiter at the end of the URL
+         url = url .. "&"
+         encode = false
+      end
 
-      for k, v in pairs(params or {}) do
-         if k~="p" then
-            url = url.."&"..wsapi.util.url_encode(k).."="
-                          ..wsapi.util.url_encode(v or "")
+      for k, v in pairs(params) do
+         if k ~= "p" then -- skip the page param, we already have it
+            if encode then
+               bits[#bits+1] = wsapi.util.url_encode(k) .. "=" .. wsapi.util.url_encode(v or "")
+            else
+               bits[#bits+1] = k .. "=" .. (v or "")
+            end
          end
       end
+
+      url = url .. table.concat(bits, "&")
    end
 
    -- finally the anchor
